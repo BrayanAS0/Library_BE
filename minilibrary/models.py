@@ -26,8 +26,8 @@ class Book(models.Model):
     recommended_by = models.ManyToManyField(
         get_user_model(), through="Recommendation", related_name="recommendations")
 
-    def __str__(self):
-        return self.title
+    # def __str__(self):
+    #     return self.title
 
 
 class BookDetail(models.Model):
