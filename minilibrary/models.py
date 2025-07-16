@@ -12,6 +12,9 @@ class Author(models.Model):
 
 class Genre(models.Model):
     name = models.CharField(max_length=50, unique=True)
+    
+    def __str__(self):
+        return self.name
 
 
 class Book(models.Model):
@@ -59,7 +62,12 @@ class Loan(models.Model):
 
     def __str__(self):
         return f"{self.user} -> {self.book.title} ({'Devuelto' if self.is_returned else 'Prestado'})"
-
+    def save(self, *args, **kwargs):
+        if self.return_date:
+            self.is_returned = True
+        else:
+            self.is_returned = False
+        super().save(*args, **kwargs)
 
 class Recommendation(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
