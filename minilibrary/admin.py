@@ -3,10 +3,11 @@ from .models import Book,BookDetail,Author,Review,Genre,Loan
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 import datetime
-User = get_user_model()
-
-
 from django.utils import timezone
+
+User = get_user_model()
+admin.site.site_header="Panel de prestamo de libros"
+
 
 @admin.action(description="Marcar préstamos como devueltos")
 def mark_as_returned(modeladmin, request, queryset):
