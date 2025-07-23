@@ -18,7 +18,7 @@ def login(request):
     if request.method == "POST":
             try:
                 data = json.loads(request.body)
-                username = data.get("user")
+                username = data.get("username")
                 password = data.get("password")
             except (json.JSONDecodeError, TypeError):
                 return JsonResponse({"error": "Invalid JSON"}, status=400)
@@ -33,3 +33,27 @@ def login(request):
                 return JsonResponse({"access": "denied"}, status=401)
     else:
             return JsonResponse({"error": "POST required"}, status=405)
+@csrf_exempt
+def signup(request):
+    if request.method == "POST":
+            try:
+                data = json.loads(request.body)
+                username = data.get("username")
+                password = data.get("password")
+            except (json.JSONDecodeError, TypeError):
+                return JsonResponse({"error": "Invalid JSON"}, status=400)
+            
+            if not username or not password:
+                return JsonResponse({"error": "Missing username or password"}, status=400)
+
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                return JsonResponse({"access": "granted"})
+            else:
+                return JsonResponse({"access": "denied"}, status=401)
+    else:
+            return JsonResponse({"error": "POST required"}, status=405)
+
+def Books(request):
+    books = Book.objects.all()
+    return JsonResponse(books.values())
