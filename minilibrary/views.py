@@ -57,3 +57,17 @@ def signup(request):
 def Books(request):
     books = Book.objects.all()
     return JsonResponse(books.values())
+def Book_index(request):
+    books = Book.objects.prefetch_related("loans").all()
+    
+    result = []
+    for b in books:
+        data = {
+            "id": b.id,
+            "title": b.title,
+            "publication_date": b.publication_date,
+            "pages":b.pages,
+            "has_active_loan": b.loans.filter(is_returned=False).exists(),
+        }
+        result.append(data)
+    return JsonResponse(result, safe=False)
