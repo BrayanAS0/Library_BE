@@ -71,7 +71,7 @@ class Loan(models.Model):
 
 class Recommendation(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    book = models.ForeignKey(Book, on_delete=models.CASCADE,related_name="recommendation")
     recommended_at = models.DateTimeField(auto_now_add=True)
     note = models.TextField(blank=True)
 
