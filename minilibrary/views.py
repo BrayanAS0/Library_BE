@@ -71,16 +71,28 @@ def Book_index(request):
         }
         result.append(data)
     return JsonResponse(result, safe=False)
-def Book_with_detail(request):
-    books = Book.objects.prefetch_related('reviews', 'recommendation').all()    
-    result = []
-    for b in books:
-        data = {
-            "id": b.id,
-            "title": b.title,
-            "publication_date": b.publication_date,
-            "pages":b.pages,
-"reviews": list(b.reviews.values('id', 'rating', 'user')),  
-"recommendations": list(b.recommendation.values('id', 'user')),        }
-        result.append(data)
-    return JsonResponse(result, safe=False)
+def book_with_detail(request):
+    id = request.GET.get("id")
+    book = Book.objects.get(pk=id)
+    recommendations = list(
+        book.recommendation.all().values("user__username", "recommended_at", "note")
+    )
+    for r in recommendations:
+        r["user"] = r.pop("user__username")
+
+    reviews = list(
+        book.reviews.all().values("user__username", "rating", "text", "created_at")
+    )
+    for r in reviews:
+        r["user"] = r.pop("user__username")
+
+    response = {
+        "id": book.id,
+        "author":book.author.name,
+        "pages": book.pages,
+        "title": book.title,
+        "publication_date": book.publication_date,
+        "recommendations": recommendations,
+        "reviews": reviews
+    }
+    return JsonResponse(response)

@@ -6,5 +6,5 @@ urlpatterns = [
     path("login",views.login),
     path("sign_up",views.signup),
     path("get_book_index",views.Book_index),
-    path("Book_with_detail",views.Book_with_detail)
+    path("Book_with_detail",views.book_with_detail)
 ]
