@@ -96,3 +96,18 @@ def book_with_detail(request):
         "reviews": reviews
     }
     return JsonResponse(response)
+@csrf_exempt
+def loan_books(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            user_id = data.get("user_id")
+            book_id = data.get("book_id")
+            
+            print(user_id, book_id)
+            return JsonResponse({"user_id": user_id, "book_id": book_id})
+        
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+    else:
+        return JsonResponse({"error": "Only POST method allowed"}, status=405)
