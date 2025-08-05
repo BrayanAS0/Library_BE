@@ -1,7 +1,7 @@
 from django.http import JsonResponse
-from .models import Book,BookDetail,Review
+from .models import Book,BookDetail,Review,Loan
 import json
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate,get_user_model,get_user
 from django.views.decorators.csrf import csrf_exempt
 def get_books(request):
     author_id = request.GET.get("author")
@@ -98,16 +98,39 @@ def book_with_detail(request):
     return JsonResponse(response)
 @csrf_exempt
 def loan_books(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            user_id = data.get("user_id")
-            book_id = data.get("book_id")
-            
-            print(user_id, book_id)
-            return JsonResponse({"user_id": user_id, "book_id": book_id})
-        
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON"}, status=400)
-    else:
+    if request.method != "POST":
         return JsonResponse({"error": "Only POST method allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        user_id = data.get("user_id")
+        book_id = data.get("book_id")
+
+        if not user_id or not book_id:
+            return JsonResponse({"error": "Missing user_id or book_id"}, status=400)
+
+        is_taken = Loan.objects.filter(book_id=book_id, is_returned=False).exists()
+        if is_taken:
+            return JsonResponse({"error": "Book is already loaned"}, status=409)
+
+        try:
+            book = Book.objects.get(pk=book_id)
+        except Book.DoesNotExist:
+            return JsonResponse({"error": "Book does not exist"}, status=404)
+
+        try:
+            user = get_user_model().objects.get(pk=user_id)
+        except get_user_model().DoesNotExist:
+            return JsonResponse({"error": "User does not exist"}, status=404)
+
+        loan = Loan.objects.create(book=book, user=user)
+        return JsonResponse({
+            "user_id": user_id,
+            "book_id": book_id,
+            "loan_id": loan.id
+        }, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
