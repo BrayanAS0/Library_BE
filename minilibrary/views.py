@@ -134,3 +134,11 @@ def loan_books(request):
         return JsonResponse({"error": "Invalid JSON"}, status=400)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+    
+def get_loans_by_user_id(request):
+    try:
+        user_id =request.GET.get("user_id")
+        loans= list(Loan.objects.filter(user__id=user_id).values())
+        return JsonResponse(loans,safe=False)
+    except:
+        return JsonResponse("somethings is wrong")
