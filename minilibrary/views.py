@@ -3,6 +3,8 @@ from .models import Book,BookDetail,Review,Loan
 import json
 from django.contrib.auth import authenticate,get_user_model,get_user
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 def get_books(request):
     author_id = request.GET.get("author")
     books = Book.objects.all()
@@ -132,10 +134,8 @@ def loan_books(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
     
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def get_loans_by_user_id(request):
-    try:
-        user_id =request.GET.get("user_id")
-        loans= list(Loan.objects.filter(user__id=user_id).values())
-        return JsonResponse(loans,safe=False)
-    except:
-        return JsonResponse("somethings is wrong")
+    loans = Loan.objects.filter(user__id=request.user.id).values()
+    return JsonResponse(list(loans), safe=False)

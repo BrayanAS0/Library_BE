@@ -8,5 +8,5 @@ urlpatterns = [
     path("get_book_index",views.Book_index),
     path("Book_with_detail",views.book_with_detail),
     path("loan_books",views.loan_books),
-    path("get_loans_by_user_id",views.get_loans_by_user_id)
+    path("get_loans_by_user_id",views.get_loans_by_user_id),
 ]
