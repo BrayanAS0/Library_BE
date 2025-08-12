@@ -13,7 +13,6 @@ def get_books(request):
     books_data = list(books.values()) 
 
     return JsonResponse(books_data, safe=False)
-@csrf_exempt
 def login(request):
     if request.method == "POST":
             try:
@@ -33,7 +32,6 @@ def login(request):
                 return JsonResponse({"access": "denied"}, status=401)
     else:
             return JsonResponse({"error": "POST required"}, status=405)
-@csrf_exempt
 def signup(request):
     if request.method == "POST":
             try:
@@ -96,7 +94,6 @@ def book_with_detail(request):
         "reviews": reviews
     }
     return JsonResponse(response)
-@csrf_exempt
 def loan_books(request):
     if request.method != "POST":
         return JsonResponse({"error": "Only POST method allowed"}, status=405)
