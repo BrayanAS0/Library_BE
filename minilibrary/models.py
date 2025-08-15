@@ -53,7 +53,7 @@ class Review(models.Model):
 
 
 class Loan(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,related_name="user")
     book = models.ForeignKey(
         Book, on_delete=models.CASCADE, related_name="loans")
     loan_date = models.DateTimeField(auto_now_add=True)

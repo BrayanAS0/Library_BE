@@ -1,5 +1,5 @@
 from django.http import JsonResponse
-from .models import Book,BookDetail,Review,Loan
+from .models import Book,BookDetail,Review,Loan,Author
 import json
 from django.contrib.auth import authenticate,get_user_model,get_user
 from django.views.decorators.csrf import csrf_exempt
@@ -96,16 +96,18 @@ def book_with_detail(request):
         "reviews": reviews
     }
     return JsonResponse(response)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def loan_books(request):
     if request.method != "POST":
         return JsonResponse({"error": "Only POST method allowed"}, status=405)
 
     try:
         data = json.loads(request.body)
-        user_id = data.get("user_id")
+        
         book_id = data.get("book_id")
 
-        if not user_id or not book_id:
+        if  not book_id:
             return JsonResponse({"error": "Missing user_id or book_id"}, status=400)
 
         is_taken = Loan.objects.filter(book_id=book_id, is_returned=False).exists()
@@ -118,13 +120,13 @@ def loan_books(request):
             return JsonResponse({"error": "Book does not exist"}, status=404)
 
         try:
-            user = get_user_model().objects.get(pk=user_id)
+            user = get_user_model().objects.get(pk=request.user.id)
         except get_user_model().DoesNotExist:
             return JsonResponse({"error": "User does not exist"}, status=404)
 
         loan = Loan.objects.create(book=book, user=user)
         return JsonResponse({
-            "user_id": user_id,
+            "user_id": request.user.id,
             "book_id": book_id,
             "loan_id": loan.id
         }, status=201)
@@ -134,8 +136,26 @@ def loan_books(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
     
-@api_view(["GET"])
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_loans_by_user_id(request):
-    loans = Loan.objects.filter(user__id=request.user.id).values()
-    return JsonResponse(list(loans), safe=False)
+    data=[]
+    book_loans= (Author
+                 .objects.prefetch_related("books__loans")
+                 .filter(books__loans__user=request.user)
+                 .values("books__loans__id",
+                         "books__loans__is_returned",
+                         "books__loans__return_date","books__title",
+                         "books__loans__loan_date",
+                         "name"))
+    for i in book_loans:
+        data.append({"id":i["books__loans__id"],
+                     "is_returned":i["books__loans__is_returned"],
+                     "return_date":i["books__loans__return_date"],
+                     "title":i["books__title"],
+                     "loan_date":i["books__loans__loan_date"],
+                     "author":i["name"]
+                     
+                     })
+    print(data)
+    return JsonResponse(list(data),safe=False)
