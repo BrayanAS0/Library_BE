@@ -9,4 +9,6 @@ urlpatterns = [
     path("Book_with_detail",views.book_with_detail),
     path("loan_books",views.loan_books),
     path("get_loans_by_user_id",views.get_loans_by_user_id),
+    path("return_book",views.return_book),
+    path("add_review",views.add_review)
 ]

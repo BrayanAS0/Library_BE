@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate,get_user_model,get_user
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from django.utils import timezone
+
 def get_books(request):
     author_id = request.GET.get("author")
     books = Book.objects.all()
@@ -147,15 +149,63 @@ def get_loans_by_user_id(request):
                          "books__loans__is_returned",
                          "books__loans__return_date","books__title",
                          "books__loans__loan_date",
-                         "name"))
+                         "name",
+                         "books__id"))
     for i in book_loans:
         data.append({"id":i["books__loans__id"],
                      "is_returned":i["books__loans__is_returned"],
                      "return_date":i["books__loans__return_date"],
                      "title":i["books__title"],
                      "loan_date":i["books__loans__loan_date"],
-                     "author":i["name"]
+                     "author":i["name"],
+                     "book_id":i["books__id"]
                      
                      })
     print(data)
     return JsonResponse(list(data),safe=False)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def add_review(request):
+    book_id = request.data.get("book_id")
+    rating = request.data.get("rating")
+    text = request.data.get("text")
+
+    if not (book_id and rating and text):
+        return JsonResponse({"error": "Missing data"}, status=400)
+
+    book = Book.objects.filter(id=book_id).first()
+    if not book:
+        return JsonResponse({"error": "Book not found"}, status=404)
+
+    review, created = Review.objects.update_or_create(
+        user=request.user,
+        book=book,
+        defaults={"rating": rating, "text": text}
+    )
+    return JsonResponse({
+        "review_id": review.id,
+        "created": created,
+        "book": book.title,
+        "rating": review.rating,
+        "text": review.text
+    }, status=201 if created else 200)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def return_book(request):
+    try:
+        loan_id = request.data.get("loan_id")
+        if not loan_id:
+            return JsonResponse({"error": "Missing loan_id"}, status=400)
+
+        loan = Loan.objects.filter(id=loan_id, user=request.user, is_returned=False).first()
+        if not loan:
+            return JsonResponse({"error": "Loan not found or already returned"}, status=404)
+
+        loan.is_returned = True
+        loan.return_date = timezone.now()
+        loan.save()
+
+        return JsonResponse({"success": "Book returned successfully"}, status=200)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
